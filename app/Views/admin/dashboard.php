@@ -75,6 +75,7 @@
 <!-- Dashboard Grid -->
 <div style="display: grid; grid-template-columns: 1fr 300px; gap: 24px; margin-bottom: 32px;">
     <!-- Recent Posts -->
+    <!-- Recent Posts -->
     <div class="card">
         <div class="card-header">
             <div class="d-flex justify-content-between align-items-center">
@@ -103,27 +104,34 @@
                                 <tr>
                                     <td>
                                         <div>
-                                            <strong><?= esc($post['title']) ?></strong>
+                                            <strong><?= esc($post['title'] ?? 'Untitled') ?></strong>
                                             <?php if (!empty($post['category_name'])): ?>
                                                 <br><span class="badge badge-secondary"><?= esc($post['category_name']) ?></span>
                                             <?php endif; ?>
                                         </div>
                                     </td>
                                     <td>
-                                        <span class="badge badge-<?= $post['status'] == 'published' ? 'success' : 'warning' ?>">
-                                            <?= ucfirst($post['status']) ?>
+                                        <span
+                                            class="badge badge-<?= ($post['status'] ?? 'draft') == 'published' ? 'success' : 'warning' ?>">
+                                            <?= ucfirst($post['status'] ?? 'draft') ?>
                                         </span>
                                     </td>
                                     <td>
-                                        <small><?= date('M d, Y', strtotime($post['created_at'])) ?></small>
+                                        <small>
+                                            <?php if (!empty($post['created_at'])): ?>
+                                                <?= date('M d, Y', strtotime($post['created_at'])) ?>
+                                            <?php else: ?>
+                                                N/A
+                                            <?php endif; ?>
+                                        </small>
                                     </td>
                                     <td>
                                         <div class="btn-group">
-                                            <a href="<?= base_url('admin/posts/edit/' . $post['id']) ?>"
+                                            <a href="<?= base_url('admin/posts/edit/' . ($post['id'] ?? '')) ?>"
                                                 class="btn-action btn-action-edit" title="Edit">
                                                 <i class="fas fa-edit"></i>Edit
                                             </a>
-                                            <?php if ($post['status'] == 'published'): ?>
+                                            <?php if (($post['status'] ?? '') == 'published' && !empty($post['slug'])): ?>
                                                 <a href="<?= base_url('blog/post/' . $post['slug']) ?>"
                                                     class="btn-action btn-action-view" title="View" target="_blank">
                                                     <i class="fas fa-eye"></i>View
@@ -139,8 +147,14 @@
             <?php else: ?>
                 <div class="text-center" style="padding: 48px 24px;">
                     <i class="fas fa-newspaper" style="font-size: 48px; color: var(--text-muted); margin-bottom: 16px;"></i>
-                    <h5 style="color: var(--text-muted); margin-bottom: 8px;">No posts yet</h5>
-                    <p style="color: var(--text-muted); margin-bottom: 24px;">Start by creating your first blog post!</p>
+                    <h5 style="color: var(--text-muted); margin-bottom: 8px;">No posts found</h5>
+                    <p style="color: var(--text-muted); margin-bottom: 24px;">
+                        <?php if (ENVIRONMENT !== 'production'): ?>
+                            Debug: recentPosts = <?= var_export($recentPosts, true) ?>
+                        <?php else: ?>
+                            Start by creating your first blog post!
+                        <?php endif; ?>
+                    </p>
                     <a href="<?= base_url('admin/posts/create') ?>" class="btn btn-primary">
                         <i class="fas fa-plus" style="margin-right: 8px;"></i>Create Your First Post
                     </a>

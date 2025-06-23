@@ -1,4 +1,5 @@
 <?php
+// app/Controllers/Admin/Dashboard.php
 
 namespace App\Controllers\Admin;
 
@@ -47,18 +48,41 @@ class Dashboard extends BaseController
                 log_message('error', 'Error getting dashboard stats: ' . $e->getMessage());
             }
 
-            // Get recent posts with error handling
+            // Get recent posts with multiple fallback strategies
             try {
+                // First attempt: Try with joins
                 $recentPosts = $this->postModel
-                    ->select('posts.*, categories.name as category_name, users.username as author_name')
+                    ->select('
+                        posts.id,
+                        posts.title,
+                        posts.slug,
+                        posts.content,
+                        posts.excerpt,
+                        posts.status,
+                        posts.created_at,
+                        posts.updated_at,
+                        categories.name as category_name,
+                        users.username as author_name
+                    ')
                     ->join('categories', 'categories.id = posts.category_id', 'left')
                     ->join('users', 'users.id = posts.user_id', 'left')
                     ->orderBy('posts.created_at', 'DESC')
                     ->limit(5)
                     ->findAll();
+
+                // If no results with joins, try without joins
+                if (empty($recentPosts)) {
+                    $recentPosts = $this->postModel
+                        ->select('id, title, slug, status, created_at')
+                        ->orderBy('created_at', 'DESC')
+                        ->limit(5)
+                        ->findAll();
+                }
+
             } catch (\Exception $e) {
                 log_message('error', 'Error getting recent posts: ' . $e->getMessage());
-                // Fallback to posts without joins
+
+                // Final fallback - basic query
                 try {
                     $recentPosts = $this->postModel
                         ->orderBy('created_at', 'DESC')
